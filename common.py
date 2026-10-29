@@ -105,16 +105,37 @@ def html(markup: str):
     st.markdown("\n".join(line.strip() for line in markup.splitlines() if line.strip()), unsafe_allow_html=True)
 
 
+@st.cache_resource
+def _bg_css():
+    """Soft background image (assets/bg.jpg) under a light veil; flat colour if the file is missing."""
+    import base64
+    for f in (HERE / "assets" / "bg.jpg", HERE / "bg.jpg"):
+        if f.exists():
+            b64 = base64.b64encode(f.read_bytes()).decode()
+            return (f"background: linear-gradient(rgba(255,255,255,.30), rgba(255,255,255,.45)), "
+                    f"url('data:image/jpeg;base64,{b64}') center/cover fixed !important;")
+    return f"background: {BG} !important;"
+
+
+GLASS = "rgba(255,255,255,.74)"
+
+
 def inject_style():
     html(f"""
     <link href="https://fonts.googleapis.com/css2?family=Alexandria:wght@500;700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
     html, body, .stApp, [class*="st-"], button, input, textarea, select {{ font-family: '{FONT}', Tahoma, sans-serif !important; }}
     [data-testid="stIconMaterial"], .material-symbols-rounded, [class*="material-symbols"] {{ font-family: 'Material Symbols Rounded' !important; }}
-    .stApp {{ background: {BG}; }}
-    h1, h2, h3, h4 {{ font-family: '{DISPLAY}', '{FONT}', sans-serif !important; color: {INK}; }}
+    .stApp {{ {_bg_css()} }}
+    [data-testid="stAppViewContainer"], [data-testid="stMain"], [data-testid="stBottomBlockContainer"] {{ background: transparent !important; }}
+    h1, h2, h3, h4, h5, h1 *, h2 *, h3 *, h4 * {{ font-family: '{DISPLAY}', '{FONT}', sans-serif !important; color: {INK} !important; }}
+    [data-testid="stTopNavLinkContainer"] a * {{ color: {INK}; }}
+    [data-testid="stMarkdownContainer"] p, [data-testid="stCaptionContainer"] {{ color: {INK}; }}
+    [data-baseweb="select"] > div {{ background: {SURFACE} !important; }}
+    .stButton > button {{ background: {SURFACE}; color: {INK}; border: 1px solid {LINE}; }}
+    .stButton > button[kind="primary"], [data-testid="stFormSubmitButton"] > button {{ background: {GREEN}; color: #fff; border-color: {GREEN}; }}
     [data-testid="stMain"], [data-testid="stSidebarContent"], [data-testid="stHeader"] {{ direction: rtl; }}
-    [data-testid="stHeader"] {{ background: rgba(245,248,243,.85); backdrop-filter: blur(10px); border-bottom: 1px solid {LINE}; }}
+    [data-testid="stHeader"] {{ background: rgba(255,255,255,.55); backdrop-filter: blur(10px); border-bottom: 1px solid {LINE}; }}
     [data-testid="stDecoration"], [data-testid="stStatusWidget"], [data-testid="stMainMenu"], [data-testid="stAppDeployButton"] {{ display: none; }}
     .block-container {{ padding-top: 4.2rem; max-width: 1400px; }}
     h1, h2, h3, h4, p, label, li, .stMarkdown {{ text-align: right; }}
@@ -125,9 +146,10 @@ def inject_style():
     [data-testid="stTopNavLinkContainer"] a[aria-current="page"] * {{ color: #fff !important; }}
     /* panels */
     [data-testid="stVerticalBlockBorderWrapper"]:has(> div > [data-testid="stVerticalBlock"]) {{
-        background: {SURFACE}; border: 1px solid {LINE} !important; border-radius: 18px;
+        background: {GLASS}; border: 1px solid rgba(255,255,255,.9) !important; border-radius: 18px;
+        backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); box-shadow: 0 8px 24px rgba(29,42,35,.06);
     }}
-    [data-testid="stForm"] {{ background: {SURFACE}; border: 1px solid {LINE}; border-radius: 18px; }}
+    [data-testid="stForm"] {{ background: {GLASS}; backdrop-filter: blur(14px); border: 1px solid rgba(255,255,255,.9); border-radius: 18px; }}
     [data-baseweb="select"] > div, [data-baseweb="input"] > div, .stDateInput input, .stNumberInput input, textarea {{
         background: {BG} !important; border-color: {LINE} !important;
     }}
@@ -138,6 +160,11 @@ def inject_style():
     [data-baseweb="tab"] {{ background: {SOFT}; border-radius: 999px; padding: .45rem 1.1rem; font-weight: 500; }}
     [data-baseweb="tab"][aria-selected="true"] {{ background: {GREEN}; color: #fff; }}
     [data-baseweb="tab-highlight"], [data-baseweb="tab-border"] {{ display: none; }}
+    /* force the light look even if the viewer's Streamlit theme is dark */
+    .stApp, .stApp p, .stApp label, .stApp li, .stApp span, .stApp div, [data-testid="stSidebarContent"] {{ color: {INK}; }}
+    [data-testid="stWidgetLabel"] * {{ color: {INK} !important; }}
+    [data-baseweb="select"] > div, [data-baseweb="input"] > div, [data-baseweb="input"] input, .stNumberInput input, .stTextInput input, textarea {{ color: {INK} !important; -webkit-text-fill-color: {INK}; }}
+    [data-testid="stHeader"] * {{ color: {INK}; }}
     /* header strip */
     .route {{ display:flex; flex-direction:column; gap:.45rem; margin-bottom: 1.1rem; }}
     .route h1 {{ font-size: 2.3rem; font-weight: 800; margin: 0; line-height: 1.2; padding: 0; }}
@@ -147,7 +174,7 @@ def inject_style():
     .bars i {{ font-style: normal; font-size: .82rem; color: {MUTED}; margin-inline-start:.35rem; }}
     /* KPI cards */
     .kpis {{ display:grid; grid-template-columns: repeat(var(--n,5), minmax(0,1fr)); gap: .8rem; margin: .4rem 0 1rem; }}
-    .kpi {{ background: {SURFACE}; border:1px solid {LINE}; border-radius: 16px; padding: .9rem 1.1rem; }}
+    .kpi {{ background: {GLASS}; backdrop-filter: blur(14px); border:1px solid rgba(255,255,255,.9); box-shadow: 0 6px 18px rgba(29,42,35,.06); border-radius: 16px; padding: .9rem 1.1rem; }}
     .kpi b {{ display:block; font-family:'{DISPLAY}', sans-serif; font-size: 1.5rem; font-weight: 700; color: {INK}; line-height:1.3; }}
     .kpi small {{ color: {MUTED}; font-size: .85rem; }}
     .kpi.cost b {{ color: {CORAL}; }} .kpi.good b {{ color: {GREEN}; }} .kpi.accent {{ border-color: {GOLD}; }}
@@ -225,7 +252,7 @@ def style_fig(fig, height=None):
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
         font=dict(family=FONT, color=INK, size=13), margin=dict(l=10, r=10, t=40, b=10),
         legend=dict(orientation="h", y=1.1, x=1, xanchor="right", bgcolor="rgba(0,0,0,0)"),
-        hoverlabel=dict(font_family=FONT), title=dict(x=1, xanchor="right"),
+        hoverlabel=dict(font_family=FONT),
     )
     if height:
         fig.update_layout(height=height)
